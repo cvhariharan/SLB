@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 )
 
 var config = Config{}
@@ -36,7 +37,13 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	data, err := ioutil.ReadFile("./config.json")
+	var configFile = "./config.json"
+	if len(os.Args) > 1 {
+		configFile = os.Args[1]
+	}
+	fmt.Println(configFile)
+
+	data, err := ioutil.ReadFile(configFile)
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		panic(err)
