@@ -9,14 +9,34 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
+
+	"github.com/gorilla/sessions"
 )
 
 var config = Config{}
-var count int
+
+// var count int
+
+var count map[int]int
+
+const serverMethod = -1
+
+var key = []byte("somerandomkey")
+
+var store = sessions.NewCookieStore(key)
+
+//Server key is -1
 
 type Config struct {
 	Servers []string `json:"servers"`
+	Routes  []Route  `json:"routes"`
 	Port    string   `json:"port`
+}
+
+type Route struct {
+	Route     string   `json:"route"`
+	Endpoints []string `json:"endpoints"`
 }
 
 func proxy(target string, w http.ResponseWriter, r *http.Request) {
@@ -32,17 +52,42 @@ func proxy(target string, w http.ResponseWriter, r *http.Request) {
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
-	count = (count + 1) % len(config.Servers)
-	proxy(config.Servers[count], w, r)
+	baseURL := r.URL.Path[1:]
+	writeToLog("Basepath: /" + baseURL)
+	if len(config.Servers) > 0 {
+		server := chooseServer(config.Servers, serverMethod)
+		writeToLog("Server: " + server)
+		proxy(server, w, r)
+	} else if len(config.Routes) > 0 {
+		for m := range config.Routes {
+			route := config.Routes[m].Route
+			bURL := strings.Split(route, "/")[1]
+			if baseURL == bURL {
+				server := chooseServer(config.Routes[m].Endpoints, m)
+				writeToLog("Route: " + server)
+				proxy(server, w, r)
+			}
+		}
+	}
 }
 
-func main() {
+func chooseServer(servers []string, method int) string {
+	count[method] = (count[method] + 1) % len(servers)
+	return servers[count[method]]
+}
 
+func writeToLog(message string) {
 	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)
 	}
 	logger := log.New(logFile, "", log.LstdFlags)
+	logger.Println(message)
+	logFile.Close()
+}
+
+func main() {
+	count = make(map[int]int)
 
 	var configFile = "./config.json"
 	if len(os.Args) > 1 {
@@ -54,8 +99,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	for server := range config.Servers {
-		fmt.Println(config.Servers[server])
+	for server := range config.Routes {
+		fmt.Println(config.Routes[server])
 	}
 
 	port := ":" + config.Port
@@ -64,7 +109,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", handle)
-	logger.Println("Port: " + port)
-	logger.Println("Starting server...")
-	logger.Fatal(http.ListenAndServe(port, nil))
+	writeToLog("Port: " + port)
+	writeToLog("Starting server...")
+	log.Fatal(http.ListenAndServe(port, nil))
 }
