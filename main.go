@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-
-	"github.com/gorilla/sessions"
 )
 
 var config = Config{}
@@ -21,10 +19,6 @@ var config = Config{}
 var count map[int]int
 
 const serverMethod = -1
-
-var key = []byte("somerandomkey")
-
-var store = sessions.NewCookieStore(key)
 
 //Server key is -1
 
@@ -73,6 +67,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 func chooseServer(servers []string, method int) string {
 	count[method] = (count[method] + 1) % len(servers)
+	fmt.Println(count[method])
 	return servers[count[method]]
 }
 
