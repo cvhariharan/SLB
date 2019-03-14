@@ -66,7 +66,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 func chooseServer(servers []string, method int) string {
 	count[method] = (count[method] + 1) % len(servers)
-	fmt.Println(count[method])
+	writeToLog("Chose server: " + servers[count[method]])
 	return servers[count[method]]
 }
 
@@ -80,11 +80,16 @@ func writeToLog(message string) {
 	logFile.Close()
 }
 
+//Could be improved but gets the job done
 func reloadConfig(configFile string, config *cfg.Config) {
 	var s string
-	fmt.Scanln(&s)
-	if s == "-t" {
-		*config = cfg.Parse(configFile)
+	for true {
+		fmt.Scanln(&s)
+		if s == "-t" {
+			*config = cfg.Parse(configFile)
+			fmt.Println("Reloaded")
+			fmt.Println(config)
+		}
 	}
 }
 
@@ -115,5 +120,6 @@ func main() {
 	http.HandleFunc("/", handle)
 	writeToLog("Port: " + port)
 	writeToLog("Starting server...")
+	go reloadConfig(configFile, &config)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
