@@ -1,9 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	"SLB/cfg"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -12,7 +11,7 @@ import (
 	"strings"
 )
 
-var config = Config{}
+var config = cfg.Config{}
 
 // var count int
 
@@ -81,6 +80,14 @@ func writeToLog(message string) {
 	logFile.Close()
 }
 
+func reloadConfig(configFile string, config *cfg.Config) {
+	var s string
+	fmt.Scanln(&s)
+	if s == "-t" {
+		*config = cfg.Parse(configFile)
+	}
+}
+
 func main() {
 	count = make(map[int]int)
 
@@ -88,15 +95,17 @@ func main() {
 	if len(os.Args) > 1 {
 		configFile = os.Args[1]
 	}
-	fmt.Println(configFile)
-	data, err := ioutil.ReadFile(configFile)
-	err = json.Unmarshal(data, &config)
-	if err != nil {
-		panic(err)
-	}
-	for server := range config.Routes {
-		fmt.Println(config.Routes[server])
-	}
+
+	config = cfg.Parse(configFile)
+	// fmt.Println(configFile)
+	// data, err := ioutil.ReadFile(configFile)
+	// err = json.Unmarshal(data, &config)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for server := range config.Routes {
+	// 	fmt.Println(config.Routes[server])
+	// }
 
 	port := ":" + config.Port
 	if port == ":" {
