@@ -15,14 +15,10 @@ import (
 )
 
 var config = cfg.Config{}
-
-// var count int
-
 var count map[int]int
 
-const serverMethod = -1
-
 //Server key is -1
+const serverMethod = -1
 
 func proxy(target string, w http.ResponseWriter, r *http.Request) {
 	url, _ := url.Parse(target)
@@ -72,7 +68,6 @@ func writeToLog(message string) {
 	logFile.Close()
 }
 
-//TODO(2) - hash the config struct after reload and check if changed. If yes, push it into the channel
 //Could be improved but gets the job done
 func reloadConfig(configFile string, config chan cfg.Config, wg *sync.WaitGroup) {
 	var s string
@@ -111,13 +106,12 @@ func main() {
 	var server *http.Server
 	var wg sync.WaitGroup
 
-	wg.Add(2) //Adding the reload and exit goroutines
+	// Adding the reload and exit goroutines
+	wg.Add(2)
 
 	count = make(map[int]int)
 
 	configChannel := make(chan cfg.Config)
-	// exitChannel := make(chan int)
-	// pChannel := make(chan string) //To get the port info from the goroutine
 
 	if len(os.Args) > 1 {
 		configFile = os.Args[1]
@@ -125,8 +119,6 @@ func main() {
 	go reloadConfig(configFile, configChannel, &wg)
 
 	go func() {
-		//Assuming the reloadConfig only outputs to channel if there is a change
-		// var oldServer *http.Server
 		for config = range configChannel {
 			fmt.Println(config)
 
@@ -134,7 +126,6 @@ func main() {
 			if port == ":" {
 				port = port + "8080"
 			}
-			// pChannel <- port
 			fmt.Println(server)
 			if server != nil {
 				writeToLog("Server closing: " + server.Addr)
@@ -151,7 +142,6 @@ func main() {
 		}
 		fmt.Println("final")
 		wg.Done()
-		// exitChannel <- 1
 	}()
 
 	wg.Wait()
