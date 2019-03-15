@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
+	"time"
 )
 
 var config = cfg.Config{}
@@ -20,17 +22,6 @@ var count map[int]int
 const serverMethod = -1
 
 //Server key is -1
-
-type Config struct {
-	Servers []string `json:"servers"`
-	Routes  []Route  `json:"routes"`
-	Port    string   `json:"port`
-}
-
-type Route struct {
-	Route     string   `json:"route"`
-	Endpoints []string `json:"endpoints"`
-}
 
 func proxy(target string, w http.ResponseWriter, r *http.Request) {
 	url, _ := url.Parse(target)
@@ -80,46 +71,93 @@ func writeToLog(message string) {
 	logFile.Close()
 }
 
+//TODO(2) - hash the config struct after reload and check if changed. If yes, push it into the channel
 //Could be improved but gets the job done
-func reloadConfig(configFile string, config *cfg.Config) {
+func reloadConfig(configFile string, config chan cfg.Config, wg *sync.WaitGroup) {
 	var s string
-	for true {
+	// var t cfg.Config
+	for {
+		config <- cfg.Parse(configFile)
+		fmt.Println("Reloaded")
+		// fmt.Println(config)
 		fmt.Scanln(&s)
-		if s == "-t" {
-			*config = cfg.Parse(configFile)
-			fmt.Println("Reloaded")
-			fmt.Println(config)
+		if s == "exit" {
+			fmt.Println("Closing configChannel")
+			close(config)
+			wg.Done()
+			return
 		}
+
 	}
 }
 
+func launch(server *http.Server, wg *sync.WaitGroup) {
+	writeToLog("Port: " + server.Addr)
+	writeToLog("Starting server...")
+	handler := http.HandlerFunc(handle)
+	server.Handler = handler
+	server.ListenAndServe()
+	wg.Done()
+}
+
+//TODO(3) - iterate over the channel and launch the server if there is any change
 func main() {
+	var configFile = "./config.json"
+	var server *http.Server
+	var wg sync.WaitGroup
+
+	wg.Add(2) //Adding the reload and exit goroutines
+
 	count = make(map[int]int)
 
-	var configFile = "./config.json"
+	configChannel := make(chan cfg.Config)
+	// exitChannel := make(chan int)
+	// pChannel := make(chan string) //To get the port info from the goroutine
+
 	if len(os.Args) > 1 {
 		configFile = os.Args[1]
 	}
+	go reloadConfig(configFile, configChannel, &wg)
 
-	config = cfg.Parse(configFile)
-	// fmt.Println(configFile)
-	// data, err := ioutil.ReadFile(configFile)
-	// err = json.Unmarshal(data, &config)
-	// if err != nil {
-	// 	panic(err)
+	go func() {
+		//Assuming the reloadConfig only outputs to channel if there is a change
+		// var oldServer *http.Server
+		for config = range configChannel {
+			fmt.Println(config)
+
+			port := ":" + config.Port
+			if port == ":" {
+				port = port + "8080"
+			}
+			// pChannel <- port
+			fmt.Println(server)
+			if server != nil {
+				writeToLog("Server closing: " + server.Addr)
+				fmt.Println("Server closing...")
+				server.Close()
+			}
+			server = &http.Server{
+				Addr:         port,
+				ReadTimeout:  5 * time.Second,
+				WriteTimeout: 10 * time.Second,
+			}
+			// wg.Add(1)
+			go launch(server, &wg)
+		}
+		fmt.Println("final")
+		wg.Done()
+		// exitChannel <- 1
+	}()
+
+	fmt.Println("I am done")
+	wg.Wait()
+	// port := <-pChannel
+	// fmt.Println("Got port " + port)
+	// server = &http.Server{
+	// 	Addr:         port,
+	// 	ReadTimeout:  5 * time.Second,
+	// 	WriteTimeout: 10 * time.Second,
 	// }
-	// for server := range config.Routes {
-	// 	fmt.Println(config.Routes[server])
-	// }
-
-	port := ":" + config.Port
-	if port == ":" {
-		port = port + "8080"
-	}
-
-	http.HandleFunc("/", handle)
-	writeToLog("Port: " + port)
-	writeToLog("Starting server...")
-	go reloadConfig(configFile, &config)
-	log.Fatal(http.ListenAndServe(port, nil))
+	// go launch(server)
+	// fmt.Println(<-exitChannel)
 }
