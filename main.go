@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -75,11 +76,16 @@ func writeToLog(message string) {
 //Could be improved but gets the job done
 func reloadConfig(configFile string, config chan cfg.Config, wg *sync.WaitGroup) {
 	var s string
-	// var t cfg.Config
+	var oldConfig cfg.Config
+	var t cfg.Config
 	for {
-		config <- cfg.Parse(configFile)
-		fmt.Println("Reloaded")
-		// fmt.Println(config)
+		t = cfg.Parse(configFile)
+		fmt.Println(reflect.DeepEqual(t, oldConfig))
+		if !reflect.DeepEqual(t, oldConfig) {
+			config <- t
+			fmt.Println("Reloaded")
+			oldConfig = t
+		}
 		fmt.Scanln(&s)
 		if s == "exit" {
 			fmt.Println("Closing configChannel")
@@ -100,7 +106,6 @@ func launch(server *http.Server, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-//TODO(3) - iterate over the channel and launch the server if there is any change
 func main() {
 	var configFile = "./config.json"
 	var server *http.Server
@@ -141,7 +146,7 @@ func main() {
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
 			}
-			// wg.Add(1)
+			wg.Add(1)
 			go launch(server, &wg)
 		}
 		fmt.Println("final")
@@ -149,15 +154,5 @@ func main() {
 		// exitChannel <- 1
 	}()
 
-	fmt.Println("I am done")
 	wg.Wait()
-	// port := <-pChannel
-	// fmt.Println("Got port " + port)
-	// server = &http.Server{
-	// 	Addr:         port,
-	// 	ReadTimeout:  5 * time.Second,
-	// 	WriteTimeout: 10 * time.Second,
-	// }
-	// go launch(server)
-	// fmt.Println(<-exitChannel)
 }
