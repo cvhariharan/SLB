@@ -1,7 +1,6 @@
 package main
 
 import (
-	"SLB/cfg"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cvhariharan/SLB/cfg"
 )
 
 var config = cfg.Config{}
