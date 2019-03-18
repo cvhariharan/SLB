@@ -1,5 +1,7 @@
 # SLB - Simple Load-Balancer
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f43f711381024de0aff41a9600683965)](https://app.codacy.com/app/cvhariharan/SLB?utm_source=github.com&utm_medium=referral&utm_content=cvhariharan/SLB&utm_campaign=Badge_Grade_Dashboard)
+
 SLB was made for simplicity. It was not created to replace Nginx. It came out of a basic need to have a simple load-balancer, that is easy to configure and use for personal projects. Written entirely in Go, SLB currently has only round-robin routing but a ping-based router is also in the works. 
 
 ## Configuration
