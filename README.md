@@ -56,3 +56,5 @@ If the config file is changed, press enter to reload the server. *This is not a 
 - [ ] Ping based routing
 - [ ] Graceful shutdown
 - [ ] Support for caching
+
+Feel free to open issues and send pull-requests.
