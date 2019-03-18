@@ -1,6 +1,6 @@
 # SLB - Simple Load-Balancer
 
-SLB was made for simplicity. Written entirely in Go, just install and forget. It currently has only round-robin routing but a ping-based router is also in the works. 
+SLB was made for simplicity. It was not created to replace Nginx. It came out of a basic need to have a simple load-balancer, that is easy to configure and use for personal projects. Written entirely in Go, SLB currently has only round-robin routing but a ping-based router is also in the works. 
 
 ## Configuration
 **Basic Config**
