@@ -48,19 +48,19 @@ SLB was made for simplicity. It was not created to replace Nginx. It came out of
 If the config file is changed, press enter to reload the server. *This is not a graceful restart.*
 
 ### Run
-```
+```bash
 go run main.go ./conf.json
 ```
 
 ## Features
-- Configurable
-- Simple to use
-- Highly reliable
-- Multi route support
+-  Configurable
+-  Simple to use
+-  Highly reliable
+-  Multi route support
 
 ### TODO
-- [ ] Ping based routing
-- [ ] Graceful shutdown
-- [ ] Support for caching
+-  [ ] Ping based routing
+-  [ ] Graceful shutdown
+-  [ ] Support for caching
 
 Feel free to open issues and send pull-requests.
