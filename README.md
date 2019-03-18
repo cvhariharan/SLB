@@ -46,6 +46,12 @@ SLB was made for simplicity. It was not created to replace Nginx. It came out of
 *Routes* allows you to specify a set of servers for handling each base address.  
 **If the config file has a *servers* key, the *routes* key will be ignored.**  
 If the config file is changed, press enter to reload the server. *This is not a graceful restart.*
+
+### Run
+```
+go run main.go ./conf.json
+```
+
 ## Features
 - Configurable
 - Simple to use
