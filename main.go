@@ -1,7 +1,6 @@
 package main
 
 import (
-	"SLB/cfg"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cvhariharan/SLB/cfg"
 )
 
 var config = cfg.Config{}
@@ -34,6 +35,7 @@ func proxy(target string, w http.ResponseWriter, r *http.Request) {
 
 func handle(w http.ResponseWriter, r *http.Request) {
 	baseURL := r.URL.Path[1:]
+	baseURL = strings.Split(baseURL, "/")[0]
 	writeToLog("Basepath: /" + baseURL)
 	if len(config.Servers) > 0 {
 		server := chooseServer(config.Servers, serverMethod)
