@@ -14,6 +14,10 @@ ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 
 RUN mkdir $HOME/go
 
+# package needed to use exif
+RUN apt-get install pkg-config -y
+RUN apt-get install git -y
+
 RUN go get github.com/cvhariharan/SLB
 
 WORKDIR $HOME/go/src/app
